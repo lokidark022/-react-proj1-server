@@ -34,7 +34,7 @@ const db = mysql.createConnection({
 const users = [
     {
         id: 1,
-        username: "admin",
+        username: "admin@admin.com",
         password: "admin"
     },
     {
@@ -102,7 +102,7 @@ const generateRefrestToken = (user) => {
     return jwt.sign({id: user.id,username:user.username}, "myRefreshSecretKey");
 }
 
-app.post('/login', (req, res) => {
+app.post('/', (req, res) => {
    
 
     // const values = {
@@ -110,7 +110,7 @@ app.post('/login', (req, res) => {
     //     req.body.password,
     //    }
     const user = users.find((u) => {
-        return u.username === req.body.username && u.password === req.body.password;
+        return u.username === req.body.email && u.password === req.body.password;
     });
     if(user){
         // res.json(user)
@@ -120,12 +120,15 @@ app.post('/login', (req, res) => {
 
         refreshTokens.push(refreshToken);
         res.json({
-            username:user.username,
+            isValid:true,
+            tmessage:'Valid User',
+            bmessage:'Valid Credentials',
+            email:req.body.email,
             accessToken,
             refreshToken
         });
     }else{
-        res.status(400).json("username or password incorrect!" );
+        res.json({tmessage: "Invalid User",bmessage:"Incorrect email or password please try again.",isValid:false});
         
     }
 
@@ -134,7 +137,7 @@ app.post('/login', (req, res) => {
 })
 
 
-app.post('/',(req,res) =>{
+app.post('/login_sql',(req,res) =>{
     const values = [
         req.body.email,
         req.body.password,
