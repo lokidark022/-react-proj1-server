@@ -90,12 +90,17 @@ const verify = (req, res, next) => {
 
 
 app.delete("/users/:userId",verify,(req,res) => {
-    res.status(200).json("user action valid");
+  
+    if(res){
+        res.status(200).json("user action valid");
+    }else{
+        res.json("Invalid action");
+    }
 })
 
 
 const generateAccessToken = (user) => {
-    return jwt.sign({id: user.id,username:user.username}, "mySecretKey", { expiresIn: "30s"});
+    return jwt.sign({id: user.id,username:user.username}, "mySecretKey", { expiresIn: "5s"});
 };
 
 const generateRefrestToken = (user) => {
@@ -180,9 +185,10 @@ app.post('/login_sql',(req,res) =>{
 })
 
 
-app.post("/logout", verify, (req,res) => {
+app.post("/test", verify, (req,res) => {
     const refreshToken = req.body.token;
     refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+    
     res.status(200).json("You logged out successfully.");
 });
 
