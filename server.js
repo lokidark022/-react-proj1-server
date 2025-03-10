@@ -6,17 +6,6 @@ const jwt = require("jsonwebtoken")
 const app = express()
 
 
-
-
-
-
-
-
-
-
-
-
-
 app.use(express.static(path.join(__dirname, "public")))
 app.use(cors())
 app.use(express.json())
@@ -31,18 +20,30 @@ const db = mysql.createConnection({
 })
 
 
+
+
+
 const users = [
     {
         id: 1,
         username: "admin@admin.com",
-        password: "admin"
+        password: "admin",
+        isAdmin:true
     },
     {
         id: 2,
-        username: "admin2",
-        password: "admin2"
+        username: "admin2@admin.com",
+        password: "admin2",
+        isAdmin:true
+    },
+    {
+        id: 3,
+        username: "user@user.com",
+        password: "user",
+        isAdmin:false
     }
 ];
+
 
 let refreshTokens = [];
 app.post("/refresh", (req,res) => {
@@ -72,13 +73,16 @@ app.post("/refresh", (req,res) => {
 
 const verify = (req, res, next) => {
     const authHeader = req.headers.authorization;
+  
     if(authHeader){
         const token = authHeader.split(" ")[1];
-
+      
         jwt.verify(token, "mySecretKey", (err, user) => {
+       
             if(err){
                 return res.status(403).json("Token is not valid");
             }
+          
 
             req.user = user;
             next();
@@ -87,6 +91,12 @@ const verify = (req, res, next) => {
         res.status(401).json("You are not authenticated" );
     }
 };
+app.post("/logout", verify, (req,res) => {
+    const refreshToken = req.body.token;
+    refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+    
+    res.status(200).json("You logged out successfully.");
+});
 
 
 app.delete("/users/:userId",verify,(req,res) => {
@@ -99,8 +109,9 @@ app.delete("/users/:userId",verify,(req,res) => {
 })
 
 
+
 const generateAccessToken = (user) => {
-    return jwt.sign({id: user.id,username:user.username}, "mySecretKey", { expiresIn: "5s"});
+    return jwt.sign({id: user.id,username:user.username}, "mySecretKey", { expiresIn: "5m"});
 };
 
 const generateRefrestToken = (user) => {
@@ -185,12 +196,27 @@ app.post('/login_sql',(req,res) =>{
 })
 
 
-app.post("/test", verify, (req,res) => {
-    const refreshToken = req.body.token;
-    refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
-    
-    res.status(200).json("You logged out successfully.");
+app.get("/userinfo", verify, (req,res) => {
+    if(res){
+        const email = req.user.username;
+        var elementPos = users.map(function(x) {return x.username; }).indexOf(email);
+        var objectFound = users[elementPos];
+        const userInfo = {
+            email:objectFound.username,
+            isAdmin:objectFound.isAdmin
+        }
+        //console.log(req.user.username);
+          res.status(200).json(userInfo);
+       //   console.log(result);
+         
+
+
+      
+    }else{
+        res.json("Invalid action");
+    }
 });
+
 
 
 
